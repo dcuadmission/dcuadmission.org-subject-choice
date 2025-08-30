@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhaka Central University - Subject & College Choice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8C1C13;
+            --secondary-color: #34495e;
+            --background-color: #f4f6f9;
+            --card-bg-color: #ffffff;
+            --text-color: #2c3e50;
+            --success-color: #28a745;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .header {
+            background: var(--card-bg-color);
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            border-bottom: 3px solid var(--primary-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .logo-container { display: flex; align-items: center; gap: 15px; }
+        .logo-container img { width: 60px; height: 60px; }
+        .header .title h1 { margin: 0; color: var(--primary-color); font-size: 1.6em; }
+        .header .title p { margin: 0; color: var(--secondary-color); }
+
+        .deadline-timer { text-align: right; }
+        #countdown { font-size: 1.1em; font-weight: 700; color: var(--danger-color); }
+        #deadline-message { font-weight: 600; font-size: 0.9em; }
+        
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--card-bg-color); padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .card h2 { margin-top: 0; font-size: 1.5em; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .info-item { background: #f8f9fa; padding: 12px; border-radius: 5px; border-left: 3px solid var(--primary-color); }
+        .info-item p { margin: 0; font-size: 0.9em; }
+        .info-item span { font-weight: 600; color: var(--text-color); }
+        
+        .choice-item { display: grid; grid-template-columns: 40px 1fr 1fr 1fr 40px; gap: 15px; align-items: center; margin-bottom: 10px; padding: 10px; border-radius: 5px; background-color: #fdfdfd; border: 1px solid var(--border-color); }
+        .choice-number { font-weight: 700; font-size: 1.2em; text-align: center; color: var(--secondary-color); }
+        select { padding: 10px; border-radius: 5px; border: 1px solid #ced4da; font-size: 0.95em; width: 100%; }
+        
+        .action-buttons { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn i { margin-right: 5px; }
+        .btn-add { background-color: #3498db; color: white; }
+        .btn-add:hover { background-color: #2980b9; }
+        .btn-submit { background-color: var(--success-color); color: white; }
+        .btn-submit:hover { background-color: #218838; }
+        .btn-edit { background-color: var(--warning-color); color: white; }
+        .btn-edit:hover { background-color: #d35400; }
+        .btn-print { background-color: var(--secondary-color); color: white; }
+        .btn-print:hover { background-color: #1e2b37; }
+        .btn-remove { background: none; border: none; color: var(--danger-color); font-size: 1.2em; cursor: pointer; transition: transform 0.2s; }
+        .btn-remove:hover { transform: scale(1.2); }
+        .btn:disabled, select:disabled { background-color: #bdc3c7; cursor: not-allowed; opacity: 0.7; }
+
+        .footer { text-align: center; padding: 20px; margin-top: 30px; background-color: #343a40; color: #f8f9fa; font-size: 0.9em; }
+        
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 5px; font-weight: 500; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .card { box-shadow: none; border: 1px solid #ccc; }
+            select { border: none; -webkit-appearance: none; -moz-appearance: none; appearance: none; padding: 0; }
+            select option { display: none; }
+            select option[selected] { display: block; }
+        }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; gap: 15px; }
+            .choice-item { grid-template-columns: 1fr; gap: 10px; }
+            .choice-number, .btn-remove { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo-container">
+            <img src="https://dcuadmission.org/images/cse-buet.png" alt="DCU Logo">
+            <div class="title">
+                <h1>Dhaka Central University</h1>
+                <p>Admission Subject & College Choice</p>
+            </div>
+        </div>
+        <div class="deadline-timer">
+            <p id="deadline-message">Time left to submit:</p>
+            <div id="countdown"></div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="card print-area">
+            <h2>Applicant Details</h2>
+            <div class="info-grid">
+                <div class="info-item"><p>Name: <span>MD. SADMAN SADIK LIMON</span></p></div>
+                <div class="info-item"><p>Roll: <span>331228</span></p></div>
+                <div class="info-item"><p>Merit Position: <span>1342</span></p></div>
+                <div class="info-item"><p>Unit: <span>SCIENCE</span></p></div>
+            </div>
+        </div>
+
+        <div class="card print-area">
+            <h2>Your Preferences</h2>
+            <div id="alert-box"></div>
+            <div id="choice-list"></div>
+            <div class="action-buttons">
+                <button id="addBtn" class="btn btn-add"><i class="fas fa-plus"></i> Add Choice</button>
+                <button id="submitBtn" class="btn btn-submit"><i class="fas fa-check"></i> Submit Final Choice</button>
+                <button id="editBtn" class="btn btn-edit" style="display: none;"><i class="fas fa-edit"></i> Edit Choices</button>
+                <button id="printBtn" class="btn btn-print"><i class="fas fa-print"></i> Print</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 - CSE, BUET | Dhaka Central University Admission Portal</p>
+    </footer>
+
+    <script>
+        const choiceListContainer = document.getElementById('choice-list');
+        const addBtn = document.getElementById('addBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const editBtn = document.getElementById('editBtn');
+        const printBtn = document.getElementById('printBtn');
+        const alertBox = document.getElementById('alert-box');
+        const deadline = new Date('2025-09-16T00:00:00');
+
+        const colleges = [
+            { value: "", text: "Select College" }, { value: "Dhaka College", text: "Dhaka College" },
+            { value: "Titumir College", text: "Titumir College" }, { value: "Govt. Bangla College", text: "Govt. Bangla College" },
+            { value: "Govt. Suhrawardi College", text: "Govt. Suhrawardi College" }, { value: "Govt. Kabi Nazrul College", text: "Govt. Kabi Nazrul College" },
+            { value: "Eden College", text: "Eden College" }, { value: "Begum Badrunnesa College", text: "Begum Badrunnesa College" }
+        ];
+
+        const subjectsByUnit = {
+            "A": ["Select Subject", "Physics", "Chemistry", "Mathematics", "Zoology", "Botany", "Statistics", "Psychology"],
+            "B": ["Select Subject", "English", "Economics", "Bangla", "Political Science", "History", "Islamic History...", "Philosophy", "Islamic Studies", "Sociology", "Social Work"],
+            "C": ["Select Subject", "Accounting...", "Finance", "Management Studies", "Marketing"]
+        };
+
+        function renderChoiceRow(choiceData, index, isDisabled) {
+            const choiceItem = document.createElement('div');
+            choiceItem.className = 'choice-item';
+            choiceItem.innerHTML = `
+                <span class="choice-number">${index + 1}.</span>
+                <select class="college-select" ${isDisabled ? 'disabled' : ''}>${colleges.map(c => `<option value="${c.value}" ${c.value === choiceData.college ? 'selected' : ''}>${c.text}</option>`).join('')}</select>
+                <select class="unit-select" ${isDisabled ? 'disabled' : ''}>
+                    <option value="">Unit</option>
+                    <option value="A" ${choiceData.unit === 'A' ? 'selected' : ''}>A</option>
+                    <option value="B" ${choiceData.unit === 'B' ? 'selected' : ''}>B</option>
+                    <option value="C" ${choiceData.unit === 'C' ? 'selected' : ''}>C</option>
+                </select>
+                <select class="subject-select" ${isDisabled ? 'disabled' : ''}><option value="">Subject</option></select>
+                <button class="btn-remove" ${isDisabled ? 'style="display:none;"' : ''}><i class="fas fa-trash-alt"></i></button>
+            `;
+            const subjectSelect = choiceItem.querySelector('.subject-select');
+            if (choiceData.unit && subjectsByUnit[choiceData.unit]) {
+                subjectsByUnit[choiceData.unit].forEach(subject => {
+                    const option = new Option(subject, subject, false, subject === choiceData.subject);
+                    subjectSelect.add(option);
+                });
+            }
+            choiceListContainer.appendChild(choiceItem);
+        }
+
+        function reRenderUI() {
+            const choices = Array.from(document.querySelectorAll('.choice-item')).map(item => ({
+                college: item.querySelector('.college-select').value,
+                unit: item.querySelector('.unit-select').value,
+                subject: item.querySelector('.subject-select').value
+            }));
+            choiceListContainer.innerHTML = '';
+            choices.forEach((choice, index) => renderChoiceRow(choice, index, false));
+            addEventListenersToAll();
+        }
+
+        function addChoice() {
+            renderChoiceRow({ college: '', unit: '', subject: '' }, choiceListContainer.children.length, false);
+            addEventListenersToAll();
+        }
+
+        function addEventListenersToAll() {
+            document.querySelectorAll('.unit-select').forEach(sel => sel.onchange = handleUnitChange);
+            document.querySelectorAll('.btn-remove').forEach(btn => btn.onclick = (e) => {
+                e.target.closest('.choice-item').remove();
+                reRenderUI();
+            });
+        }
+        
+        function handleUnitChange(event) {
+            const subjectSelect = event.target.closest('.choice-item').querySelector('.subject-select');
+            const selectedUnit = event.target.value;
+            subjectSelect.innerHTML = `<option value="">Select Subject</option>`;
+            if (selectedUnit && subjectsByUnit[selectedUnit]) {
+                subjectsByUnit[selectedUnit].forEach(subject => subjectSelect.add(new Option(subject, subject)));
+            }
+        }
+
+        function submitChoices() {
+            const choices = Array.from(document.querySelectorAll('.choice-item')).map(item => ({
+                college: item.querySelector('.college-select').value,
+                unit: item.querySelector('.unit-select').value,
+                subject: item.querySelector('.subject-select').value
+            }));
+            
+            if (choices.length === 0 || choices.some(c => !c.college || !c.unit || !c.subject)) {
+                 alert('Please fill all fields for every choice before submitting.');
+                 return;
+            }
+
+            if (confirm("Are you sure? Your choices will be locked after submission.")) {
+                localStorage.setItem('dcuSubmittedChoices', JSON.stringify(choices));
+                initializePage();
+            }
+        }
+        
+        function enableEditing() {
+            if (confirm("Are you sure? Your previously submitted choices will be deleted and you have to choose again.")) {
+                localStorage.removeItem('dcuSubmittedChoices');
+                initializePage();
+            }
+        }
+
+        function updateCountdown() {
+            const timeLeft = deadline - new Date();
+            if (timeLeft <= 0) {
+                document.getElementById('countdown').innerHTML = "Deadline Passed";
+                disableAllEditing();
+                clearInterval(countdownInterval);
+                return;
+            }
+            const d = Math.floor(timeLeft / (1000*60*60*24));
+            const h = Math.floor((timeLeft % (1000*60*60*24)) / (1000*60*60));
+            const m = Math.floor((timeLeft % (1000*60*60)) / (1000*60));
+            const s = Math.floor((timeLeft % (1000*60)) / 1000);
+            document.getElementById('countdown').innerHTML = `${d}d ${h}h ${m}m ${s}s`;
+        }
+
+        function disableAllEditing() {
+            document.querySelectorAll('select, .btn-remove, #addBtn, #submitBtn, #editBtn').forEach(el => el.disabled = true);
+            alertBox.innerHTML = `<div class="alert alert-info">The deadline for subject choice has passed. You can no longer edit your choices.</div>`;
+        }
+        
+        function initializePage() {
+            const submittedChoices = JSON.parse(localStorage.getItem('dcuSubmittedChoices'));
+
+            if (new Date() > deadline) {
+                if (submittedChoices) {
+                    choiceListContainer.innerHTML = '';
+                    submittedChoices.forEach((choice, index) => renderChoiceRow(choice, index, true));
+                }
+                disableAllEditing();
+                return;
+            }
+
+            if (submittedChoices) {
+                choiceListContainer.innerHTML = '';
+                submittedChoices.forEach((choice, index) => renderChoiceRow(choice, index, true));
+                addBtn.style.display = 'none';
+                submitBtn.style.display = 'none';
+                editBtn.style.display = 'inline-flex';
+                alertBox.innerHTML = `<div class="alert alert-success">Your choices have been submitted successfully. You can edit them until the deadline.</div>`;
+            } else {
+                choiceListContainer.innerHTML = '';
+                addChoice();
+                addBtn.style.display = 'inline-flex';
+                submitBtn.style.display = 'inline-flex';
+                editBtn.style.display = 'none';
+                alertBox.innerHTML = `<div class="alert alert-info">Please add your choices and click 'Submit Final Choice' to save them.</div>`;
+            }
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        addBtn.onclick = addChoice;
+        submitBtn.onclick = submitChoices;
+        editBtn.onclick = enableEditing;
+        printBtn.onclick = () => window.print();
+
+        let countdownInterval;
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+
+</body>
+</html>
