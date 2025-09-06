@@ -79,6 +79,7 @@
         .alert { padding: 15px; margin-bottom: 20px; border-radius: 5px; font-weight: 500; }
         .alert-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
         .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
 
         @media print {
             body * { visibility: hidden; }
@@ -126,6 +127,12 @@
 
         <div class="card print-area">
             <h2>Your Preferences</h2>
+            
+            <!-- New Notice Added Here -->
+            <div class="alert alert-warning">
+                <strong>দৃষ্টি আকর্ষণ:</strong> সকল আবেদনকারীকে অবশ্যই প্রতিষ্ঠান ও বিষয় মিলিয়ে <strong>সর্বনিম্ন ৫০টি পছন্দক্রম</strong> পূরণ করতে হবে। পূর্বে যারা ৫০টির কম পছন্দক্রম দাখিল করেছেন, তাদের পুনরায় নতুন করে পছন্দক্রম দাখিল করার জন্য অনুরোধ করা হচ্ছে। ৫০টির কম পছন্দক্রম গ্রহণযোগ্য হবে না।
+            </div>
+
             <div id="alert-box"></div>
             <div id="choice-list"></div>
             <div class="action-buttons">
@@ -229,18 +236,25 @@
             }));
             
             if (choices.length === 0 || choices.some(c => !c.college || !c.unit || !c.subject)) {
-                 alert('Please fill all fields for every choice before submitting.');
+                 alert('অনুগ্রহ করে জমা দেওয়ার আগে প্রতিটি পছন্দের সমস্ত ঘর পূরণ করুন।');
                  return;
             }
 
-            if (confirm("Are you sure? Your choices will be locked after submission.")) {
+            // --- MODIFIED PART: Minimum 50 choices check ---
+            if (choices.length < 50) {
+                alert(`অনুগ্রহ করে সর্বনিম্ন ৫০টি পছন্দক্রম পূরণ করুন। আপনি এখন পর্যন্ত ${choices.length}টি পছন্দক্রম পূরণ করেছেন।`);
+                return;
+            }
+            // --- END OF MODIFICATION ---
+
+            if (confirm("আপনি কি নিশ্চিত? জমা দেওয়ার পরে আপনার পছন্দগুলি লক হয়ে যাবে।")) {
                 localStorage.setItem('dcuSubmittedChoices', JSON.stringify(choices));
                 initializePage();
             }
         }
         
         function enableEditing() {
-            if (confirm("Are you sure? Your previously submitted choices will be deleted and you have to choose again.")) {
+            if (confirm("আপনি কি নিশ্চিত? আপনার পূর্বে জমা দেওয়া পছন্দগুলি মুছে যাবে এবং আপনাকে আবার নতুন করে পছন্দ দিতে হবে।")) {
                 localStorage.removeItem('dcuSubmittedChoices');
                 initializePage();
             }
@@ -263,7 +277,7 @@
 
         function disableAllEditing() {
             document.querySelectorAll('select, .btn-remove, #addBtn, #submitBtn, #editBtn').forEach(el => el.disabled = true);
-            alertBox.innerHTML = `<div class="alert alert-info">The deadline for subject choice has passed. You can no longer edit your choices.</div>`;
+            alertBox.innerHTML = `<div class="alert alert-info">পছন্দক্রম জমা দেওয়ার সময়সীমা শেষ হয়ে গেছে। আপনি আর আপনার পছন্দ পরিবর্তন করতে পারবেন না।</div>`;
         }
         
         function initializePage() {
@@ -284,14 +298,14 @@
                 addBtn.style.display = 'none';
                 submitBtn.style.display = 'none';
                 editBtn.style.display = 'inline-flex';
-                alertBox.innerHTML = `<div class="alert alert-success">Your choices have been submitted successfully. You can edit them until the deadline.</div>`;
+                alertBox.innerHTML = `<div class="alert alert-success">আপনার পছন্দ সফলভাবে জমা দেওয়া হয়েছে। আপনি সময়সীমা শেষ হওয়ার আগে পর্যন্ত এটি পরিবর্তন করতে পারবেন।</div>`;
             } else {
                 choiceListContainer.innerHTML = '';
                 addChoice();
                 addBtn.style.display = 'inline-flex';
                 submitBtn.style.display = 'inline-flex';
                 editBtn.style.display = 'none';
-                alertBox.innerHTML = `<div class="alert alert-info">Please add your choices and click 'Submit Final Choice' to save them.</div>`;
+                alertBox.innerHTML = `<div class="alert alert-info">অনুগ্রহ করে আপনার পছন্দগুলি যোগ করুন এবং সেগুলি সংরক্ষণ করতে 'Submit Final Choice' বাটনে ক্লিক করুন।</div>`;
             }
             updateCountdown();
             countdownInterval = setInterval(updateCountdown, 1000);
