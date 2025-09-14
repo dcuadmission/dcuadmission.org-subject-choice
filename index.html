@@ -57,8 +57,28 @@
         
         .choice-item { display: grid; grid-template-columns: 40px 1fr 1fr 1fr 40px; gap: 15px; align-items: center; margin-bottom: 10px; padding: 10px; border-radius: 5px; background-color: #fdfdfd; border: 1px solid var(--border-color); }
         .choice-number { font-weight: 700; font-size: 1.2em; text-align: center; color: var(--secondary-color); }
-        select { padding: 10px; border-radius: 5px; border: 1px solid #ced4da; font-size: 0.95em; width: 100%; }
+        select { padding: 10px; border-radius: 5px; border: 1px solid #ced4da; font-size: 0.95em; width: 100%; background-color: #fff; }
         
+        .quick-add-section {
+            background-color: #e9f5ff;
+            border: 1px solid #b3d7ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .quick-add-section label {
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        .quick-add-section select {
+            flex: 1;
+            min-width: 200px;
+        }
+
         .action-buttons { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
         .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn i { margin-right: 5px; }
@@ -95,6 +115,7 @@
             .header { flex-direction: column; text-align: center; gap: 15px; }
             .choice-item { grid-template-columns: 1fr; gap: 10px; }
             .choice-number, .btn-remove { display: none; }
+            .quick-add-section { flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
@@ -128,10 +149,16 @@
         <div class="card print-area">
             <h2>Your Preferences</h2>
             
-            <!-- New Notice Added Here -->
-            <div class="alert alert-warning">
+            <div class="alert alert-warning" id="instruction-alert">
                 <strong>দৃষ্টি আকর্ষণ:</strong> সকল আবেদনকারীকে অবশ্যই প্রতিষ্ঠান ও বিষয় মিলিয়ে <strong>সর্বনিম্ন ৫০টি পছন্দক্রম</strong> পূরণ করতে হবে। পূর্বে যারা ৫০টির কম পছন্দক্রম দাখিল করেছেন, তাদের পুনরায় নতুন করে পছন্দক্রম দাখিল করার জন্য অনুরোধ করা হচ্ছে। ৫০টির কম পছন্দক্রম গ্রহণযোগ্য হবে না।
             </div>
+
+            <div class="quick-add-section" id="quickAddContainer">
+                <label for="quickAddCollege">Quick Add by College:</label>
+                <select id="quickAddCollege"></select>
+                <button id="quickAddBtn" class="btn btn-add" style="background-color: #16a085;">Add All Subjects for this College</button>
+            </div>
+
 
             <div id="alert-box"></div>
             <div id="choice-list"></div>
@@ -140,6 +167,8 @@
                 <button id="submitBtn" class="btn btn-submit"><i class="fas fa-check"></i> Submit Final Choice</button>
                 <button id="editBtn" class="btn btn-edit" style="display: none;"><i class="fas fa-edit"></i> Edit Choices</button>
                 <button id="printBtn" class="btn btn-print"><i class="fas fa-print"></i> Print</button>
+                <!-- MODIFIED: Added See Result Button, initially hidden -->
+                <button id="seeResultBtn" class="btn btn-submit" style="display: none; background-color: #8e44ad;"><i class="fas fa-poll"></i> See Result</button>
             </div>
         </div>
     </main>
@@ -155,7 +184,15 @@
         const editBtn = document.getElementById('editBtn');
         const printBtn = document.getElementById('printBtn');
         const alertBox = document.getElementById('alert-box');
-        const deadline = new Date('2025-09-16T00:00:00');
+        const quickAddContainer = document.getElementById('quickAddContainer');
+        const quickAddCollegeSelect = document.getElementById('quickAddCollege');
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        const instructionAlert = document.getElementById('instruction-alert');
+
+        // --- MODIFIED: Added seeResultBtn and changed the deadline ---
+        const seeResultBtn = document.getElementById('seeResultBtn');
+        // Deadline is set to Sept 15, 2024, 00:00:00 (end of Sept 14th)
+        const deadline = new Date('2024-09-15T00:00:00');
 
         const colleges = [
             { value: "", text: "Select College" }, { value: "Dhaka College", text: "Dhaka College" },
@@ -163,11 +200,11 @@
             { value: "Govt. Suhrawardi College", text: "Govt. Suhrawardi College" }, { value: "Govt. Kabi Nazrul College", text: "Govt. Kabi Nazrul College" },
             { value: "Eden College", text: "Eden College" }, { value: "Begum Badrunnesa College", text: "Begum Badrunnesa College" }
         ];
-
+        
         const subjectsByUnit = {
-            "A": ["Select Subject", "Physics", "Chemistry", "Mathematics", "Zoology", "Botany", "Statistics", "Psychology"],
-            "B": ["Select Subject", "English", "Economics", "Bangla", "Political Science", "History", "Islamic History...", "Philosophy", "Islamic Studies", "Sociology", "Social Work"],
-            "C": ["Select Subject", "Accounting...", "Finance", "Management Studies", "Marketing"]
+            "A": ["Physics", "Chemistry", "Mathematics", "Zoology", "Botany", "Statistics", "Psychology"],
+            "B": ["English", "Economics", "Bangla", "Political Science", "History", "Islamic History...", "Philosophy", "Islamic Studies", "Sociology", "Social Work"],
+            "C": ["Accounting...", "Finance", "Management Studies", "Marketing"]
         };
 
         function renderChoiceRow(choiceData, index, isDisabled) {
@@ -177,12 +214,12 @@
                 <span class="choice-number">${index + 1}.</span>
                 <select class="college-select" ${isDisabled ? 'disabled' : ''}>${colleges.map(c => `<option value="${c.value}" ${c.value === choiceData.college ? 'selected' : ''}>${c.text}</option>`).join('')}</select>
                 <select class="unit-select" ${isDisabled ? 'disabled' : ''}>
-                    <option value="">Unit</option>
+                    <option value="">Select Unit</option>
                     <option value="A" ${choiceData.unit === 'A' ? 'selected' : ''}>A</option>
                     <option value="B" ${choiceData.unit === 'B' ? 'selected' : ''}>B</option>
                     <option value="C" ${choiceData.unit === 'C' ? 'selected' : ''}>C</option>
                 </select>
-                <select class="subject-select" ${isDisabled ? 'disabled' : ''}><option value="">Subject</option></select>
+                <select class="subject-select" ${isDisabled ? 'disabled' : ''}><option value="">Select Subject</option></select>
                 <button class="btn-remove" ${isDisabled ? 'style="display:none;"' : ''}><i class="fas fa-trash-alt"></i></button>
             `;
             const subjectSelect = choiceItem.querySelector('.subject-select');
@@ -201,6 +238,14 @@
                 unit: item.querySelector('.unit-select').value,
                 subject: item.querySelector('.subject-select').value
             }));
+
+            choices.sort((a, b) => {
+                if (!a.unit && b.unit) return 1;
+                if (a.unit && !b.unit) return -1;
+                if (!a.unit && !b.unit) return 0;
+                return a.unit.localeCompare(b.unit);
+            });
+
             choiceListContainer.innerHTML = '';
             choices.forEach((choice, index) => renderChoiceRow(choice, index, false));
             addEventListenersToAll();
@@ -208,11 +253,16 @@
 
         function addChoice() {
             renderChoiceRow({ college: '', unit: '', subject: '' }, choiceListContainer.children.length, false);
-            addEventListenersToAll();
+            reRenderUI();
         }
 
         function addEventListenersToAll() {
-            document.querySelectorAll('.unit-select').forEach(sel => sel.onchange = handleUnitChange);
+            document.querySelectorAll('.unit-select').forEach(sel => {
+                sel.onchange = (e) => {
+                    handleUnitChange(e);
+                    reRenderUI();
+                }
+            });
             document.querySelectorAll('.btn-remove').forEach(btn => btn.onclick = (e) => {
                 e.target.closest('.choice-item').remove();
                 reRenderUI();
@@ -228,6 +278,29 @@
             }
         }
 
+        function quickAddCollegeSubjects() {
+            const selectedCollege = quickAddCollegeSelect.value;
+            if (!selectedCollege) {
+                alert('Please select a college from the "Quick Add" dropdown first.');
+                return;
+            }
+            let currentChoices = Array.from(document.querySelectorAll('.choice-item')).map(item => ({
+                college: item.querySelector('.college-select').value,
+                unit: item.querySelector('.unit-select').value,
+                subject: item.querySelector('.subject-select').value
+            })).filter(c => c.college && c.unit && c.subject);
+
+            Object.keys(subjectsByUnit).forEach(unit => {
+                subjectsByUnit[unit].forEach(subject => {
+                    currentChoices.push({ college: selectedCollege, unit: unit, subject: subject });
+                });
+            });
+
+            choiceListContainer.innerHTML = '';
+            currentChoices.forEach((choice, index) => renderChoiceRow(choice, index, false));
+            reRenderUI();
+        }
+
         function submitChoices() {
             const choices = Array.from(document.querySelectorAll('.choice-item')).map(item => ({
                 college: item.querySelector('.college-select').value,
@@ -239,14 +312,12 @@
                  alert('অনুগ্রহ করে জমা দেওয়ার আগে প্রতিটি পছন্দের সমস্ত ঘর পূরণ করুন।');
                  return;
             }
-
-            // --- MODIFIED PART: Minimum 50 choices check ---
+            
             if (choices.length < 50) {
                 alert(`অনুগ্রহ করে সর্বনিম্ন ৫০টি পছন্দক্রম পূরণ করুন। আপনি এখন পর্যন্ত ${choices.length}টি পছন্দক্রম পূরণ করেছেন।`);
                 return;
             }
-            // --- END OF MODIFICATION ---
-
+            
             if (confirm("আপনি কি নিশ্চিত? জমা দেওয়ার পরে আপনার পছন্দগুলি লক হয়ে যাবে।")) {
                 localStorage.setItem('dcuSubmittedChoices', JSON.stringify(choices));
                 initializePage();
@@ -260,12 +331,34 @@
             }
         }
 
+        // --- MODIFIED: This function handles the UI after the deadline has passed ---
+        function handleDeadlinePassed() {
+            // Hide all action buttons and containers
+            addBtn.style.display = 'none';
+            submitBtn.style.display = 'none';
+            editBtn.style.display = 'none';
+            printBtn.style.display = 'none';
+            quickAddContainer.style.display = 'none';
+            instructionAlert.style.display = 'none';
+
+            // Show the See Result button
+            seeResultBtn.style.display = 'inline-flex';
+
+            // Disable all selects and remove buttons
+            document.querySelectorAll('select, .btn-remove').forEach(el => el.disabled = true);
+            
+            // Update header and alert messages
+            document.getElementById('deadline-message').innerText = 'Admission Result:';
+            document.getElementById('countdown').innerHTML = "Results Published";
+            alertBox.innerHTML = `<div class="alert alert-success">পছন্দক্রমের ফলাফল প্রকাশিত হয়েছে। আপনার ফলাফল দেখতে নিচের বাটনে ক্লিক করুন।</div>`;
+
+            if (countdownInterval) clearInterval(countdownInterval);
+        }
+
         function updateCountdown() {
             const timeLeft = deadline - new Date();
             if (timeLeft <= 0) {
-                document.getElementById('countdown').innerHTML = "Deadline Passed";
-                disableAllEditing();
-                clearInterval(countdownInterval);
+                handleDeadlinePassed();
                 return;
             }
             const d = Math.floor(timeLeft / (1000*60*60*24));
@@ -274,22 +367,22 @@
             const s = Math.floor((timeLeft % (1000*60)) / 1000);
             document.getElementById('countdown').innerHTML = `${d}d ${h}h ${m}m ${s}s`;
         }
-
-        function disableAllEditing() {
-            document.querySelectorAll('select, .btn-remove, #addBtn, #submitBtn, #editBtn').forEach(el => el.disabled = true);
-            alertBox.innerHTML = `<div class="alert alert-info">পছন্দক্রম জমা দেওয়ার সময়সীমা শেষ হয়ে গেছে। আপনি আর আপনার পছন্দ পরিবর্তন করতে পারবেন না।</div>`;
-        }
         
         function initializePage() {
+            quickAddCollegeSelect.innerHTML = colleges
+                .map(c => `<option value="${c.value}">${c.text}</option>`)
+                .join('');
+
             const submittedChoices = JSON.parse(localStorage.getItem('dcuSubmittedChoices'));
 
-            if (new Date() > deadline) {
+            // --- MODIFIED: Check deadline on page load ---
+            if (new Date() >= deadline) {
                 if (submittedChoices) {
                     choiceListContainer.innerHTML = '';
                     submittedChoices.forEach((choice, index) => renderChoiceRow(choice, index, true));
                 }
-                disableAllEditing();
-                return;
+                handleDeadlinePassed();
+                return; // Stop execution to prevent showing edit state
             }
 
             if (submittedChoices) {
@@ -297,6 +390,8 @@
                 submittedChoices.forEach((choice, index) => renderChoiceRow(choice, index, true));
                 addBtn.style.display = 'none';
                 submitBtn.style.display = 'none';
+                quickAddContainer.style.display = 'none';
+                instructionAlert.style.display = 'none';
                 editBtn.style.display = 'inline-flex';
                 alertBox.innerHTML = `<div class="alert alert-success">আপনার পছন্দ সফলভাবে জমা দেওয়া হয়েছে। আপনি সময়সীমা শেষ হওয়ার আগে পর্যন্ত এটি পরিবর্তন করতে পারবেন।</div>`;
             } else {
@@ -304,6 +399,7 @@
                 addChoice();
                 addBtn.style.display = 'inline-flex';
                 submitBtn.style.display = 'inline-flex';
+                quickAddContainer.style.display = 'flex';
                 editBtn.style.display = 'none';
                 alertBox.innerHTML = `<div class="alert alert-info">অনুগ্রহ করে আপনার পছন্দগুলি যোগ করুন এবং সেগুলি সংরক্ষণ করতে 'Submit Final Choice' বাটনে ক্লিক করুন।</div>`;
             }
@@ -315,6 +411,11 @@
         submitBtn.onclick = submitChoices;
         editBtn.onclick = enableEditing;
         printBtn.onclick = () => window.print();
+        quickAddBtn.onclick = quickAddCollegeSubjects;
+        // --- MODIFIED: Added onclick handler for the new button ---
+        seeResultBtn.onclick = () => {
+            window.location.href = 'https://dcuadmission.github.io/subjectchoiceresult/';
+        };
 
         let countdownInterval;
         document.addEventListener('DOMContentLoaded', initializePage);
